@@ -21,6 +21,11 @@ Enhance or extend the project beyond the scope of the original tutorial by intro
 
 ### Environment Setup (Conda)
 
+**to install env**
+```bash
+conda env create -f snake_rl_env.yml
+```
+
 **Activate the environment**
 ```bash
 conda activate pygame_env
@@ -29,8 +34,4 @@ conda activate pygame_env
 **to generate conda environment**
 ```bash
 conda env export > snake_rl_env.yml
-```
-**to install env**
-```bash
-conda env create -f snake_rl_env.yml
 ```
