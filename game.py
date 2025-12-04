@@ -18,12 +18,13 @@ Point = namedtuple('Point', 'x, y')
 # rgb colors
 WHITE = (255, 255, 255)
 RED = (200,0,0)
+GREEN = (0, 200, 0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
 BLOCK_SIZE = 20
-SPEED = 20 
+SPEED = 4000 
 
 class SnakeGameAI:
 
@@ -49,6 +50,11 @@ class SnakeGameAI:
                       Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]
 
         self.score = 0
+
+        self.bonus = None
+        self.bonus_spawn_time = None     
+        self.bonus_counter = 0  
+
         self.food = None
         self._place_food()
         self.frame_iteration = 0
@@ -59,10 +65,24 @@ class SnakeGameAI:
         y = random.randint(0, (self.h-BLOCK_SIZE)//BLOCK_SIZE)*BLOCK_SIZE
         self.food = Point(x,y)
 
-
         # check if the coordinate of the food is in the coordinate of the snake, if yes create new food.
         if self.food in self.snake:
             self._place_food()
+
+    def _place_bonus(self):
+        # only place if no bonus exists
+        if self.bonus is not None:
+            return
+        
+        x = random.randint(0, (self.w-BLOCK_SIZE)//BLOCK_SIZE) * BLOCK_SIZE
+        y = random.randint(0, (self.h-BLOCK_SIZE)//BLOCK_SIZE) * BLOCK_SIZE
+        
+        self.bonus = Point(x, y)
+        self.bonus_spawn_time = pygame.time.get_ticks()   
+        
+        if self.bonus in self.snake:
+            self.bonus = None
+            self._place_bonus()
 
     def play_step(self, action):
         """ Plays a step according to the model's predicted action """
@@ -88,16 +108,43 @@ class SnakeGameAI:
             reward = -10
             return reward, game_over, self.score
 
-        # 4. Place new food or just move
+        # 4. Eating Logic
         if self.head == self.food:
             self.score += 1
+
+            #reward of 1 for eating normal food
             reward = 10
+
+            # only normal food increments bonus counter
+            self.bonus_counter += 1
+
+            # every 8th food spawns bonus
+            if self.bonus_counter == 8:
+                self._place_bonus()
+                self.bonus_counter = 0
+
             self._place_food()
+
+        elif self.bonus is not None and self.head == self.bonus:
+            self.score += 10
+            reward = 100
+            self.bonus = None
+            self.bonus_spawn_time = None
+            self._place_food()
+
         else:
             # this is moving forward because i remove the last tail...
             self.snake.pop()
-        
-        # 5. update ui and clock
+
+        # 5. bonus timer expiration
+        if self.bonus is not None:
+            now = pygame.time.get_ticks()
+            # print(now - self.bonus_spawn_time)
+            if now - self.bonus_spawn_time >= 4000:  # 4 seconds
+                self.bonus = None
+                self.bonus_spawn_time = None
+
+        # 6. update ui and clock
         self._update_ui()
         self.clock.tick(SPEED)
         
@@ -125,9 +172,14 @@ class SnakeGameAI:
             pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
             pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
 
-
+        # draw normal food
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
 
+        # draw bonus if exists
+        if self.bonus:
+            pygame.draw.rect(self.display, GREEN, (self.bonus.x, self.bonus.y, BLOCK_SIZE, BLOCK_SIZE))
+
+        
         text = font.render("Score: " + str(self.score), True, WHITE)
         self.display.blit(text, [0,0])
         pygame.display.flip()
