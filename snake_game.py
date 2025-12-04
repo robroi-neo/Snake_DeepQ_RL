@@ -18,12 +18,14 @@ Point = namedtuple('Point', 'x, y')
 # rgb colors
 WHITE = (255, 255, 255)
 RED = (200,0,0)
+GREEN = (0, 200, 0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
 BLOCK_SIZE = 20
 SPEED = 20
+
 
 class SnakeGame:
     
@@ -44,6 +46,7 @@ class SnakeGame:
                       Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]
         
         self.score = 0
+        self.bonus = None
         self.food = None
         self._place_food()
         
@@ -53,7 +56,20 @@ class SnakeGame:
         self.food = Point(x, y)
         if self.food in self.snake:
             self._place_food()
+        # after 10 food is eaten, a bonus food will appear            
+        if self.score % 2:
+            # place bonus food and reset count to 0 again
+            self._place_bonus()
+
+    def _place_bonus(self):
+        x = random.randint(0, (self.w-BLOCK_SIZE)//BLOCK_SIZE )*BLOCK_SIZE
+        y = random.randint(0, (self.h-BLOCK_SIZE)//BLOCK_SIZE )*BLOCK_SIZE
         
+        self.bonus = Point(x, y)
+        # if bonus is eaten, return back to placing normal food
+        if self.bonus in self.snake:
+            self._place_food()
+
     def play_step(self):
         # 1. collect user input
         for event in pygame.event.get():
@@ -81,9 +97,13 @@ class SnakeGame:
             return game_over, self.score
             
         # 4. place new food or just move
+        # responsible for keeping track of the score
         if self.head == self.food:
             self.score += 1
             self._place_food()
+        elif self.head == self.bonus:
+            self.score += 10
+            self._place_food()            
         else:
             self.snake.pop()
         
@@ -112,8 +132,12 @@ class SnakeGame:
             
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
         
+        if self.bonus:
+            pygame.draw.rect(self.display, GREEN, pygame.Rect(self.bonus.x, self.bonus.y, BLOCK_SIZE, BLOCK_SIZE))
+        
         text = font.render("Score: " + str(self.score), True, WHITE)
         self.display.blit(text, [0, 0])
+
         pygame.display.flip()
         
     def _move(self, direction):
