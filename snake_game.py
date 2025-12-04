@@ -33,7 +33,10 @@ class SnakeGame:
         self.display = pygame.display.set_mode((self.w, self.h))
         pygame.display.set_caption('Snake')
         self.clock = pygame.time.Clock()
-
+        self.reset()
+        
+    
+    def reset(self):
         self.direction = Direction.RIGHT
         
         self.head = Point(self.w/2, self.h/2)
@@ -127,7 +130,7 @@ class SnakeGame:
         if self.bonus is not None:
             now = pygame.time.get_ticks()
             # print(now - self.bonus_spawn_time)
-            if now - self.bonus_spawn_time >= 5000:  # 4 seconds
+            if now - self.bonus_spawn_time >= 4000:  # 4 seconds
                 self.bonus = None
                 self.bonus_spawn_time = None
 
