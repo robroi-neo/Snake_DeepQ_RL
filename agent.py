@@ -17,7 +17,7 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(11, 256, 3)
+        self.model = Linear_QNet(16, 256, 3)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
 
@@ -32,6 +32,8 @@ class Agent:
         dir_r = game.direction == Direction.RIGHT
         dir_u = game.direction == Direction.UP
         dir_d = game.direction == Direction.DOWN
+
+        bonus_exists = 1 if game.bonus is not None else 0
 
         state = [
             # Danger straight
@@ -62,8 +64,18 @@ class Agent:
             game.food.x < game.head.x,  # food left
             game.food.x > game.head.x,  # food right
             game.food.y < game.head.y,  # food up
-            game.food.y > game.head.y  # food down
-            ]
+            game.food.y > game.head.y,  # food down
+
+
+            # Bonus existence
+            bonus_exists,
+
+            # Bonus Food Location (only if exists)
+            0 if game.bonus is None else game.bonus.x < game.head.x,
+            0 if game.bonus is None else game.bonus.x > game.head.x,
+            0 if game.bonus is None else game.bonus.y < game.head.y,
+            0 if game.bonus is None else game.bonus.y > game.head.y
+        ]
 
         return np.array(state, dtype=int)
 
