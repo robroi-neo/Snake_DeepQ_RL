@@ -1,6 +1,6 @@
 import pygame
 from screen_base import ScreenBase
-from  board import MenuScreen 
+from  menu import MenuScreen 
 class Game:
     def __init__(self):
         pygame.init()
