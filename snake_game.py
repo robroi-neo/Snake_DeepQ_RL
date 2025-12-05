@@ -19,7 +19,7 @@ RED = (200,0,0)
 GREEN = (0, 200, 0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
-BLACK = (0,0,0)
+BACKGROUND = (0,0,0)
 
 BLOCK_SIZE = 20
 SPEED = 20
@@ -111,7 +111,7 @@ class SnakeGame:
             self.bonus_counter += 1
 
             # every 8th food spawns bonus
-            if self.bonus_counter == 8:
+            if self.bonus_counter == 4:
                 self._place_bonus()
                 self.bonus_counter = 0
 
@@ -121,7 +121,6 @@ class SnakeGame:
             self.score += 10
             self.bonus = None
             self.bonus_spawn_time = None
-            self._place_food()
 
         else:
             self.snake.pop()
@@ -154,7 +153,7 @@ class SnakeGame:
         return False
         
     def _update_ui(self):
-        self.display.fill(BLACK)
+        self.display.fill(BACKGROUND)
         
         # draw snake
         for pt in self.snake:

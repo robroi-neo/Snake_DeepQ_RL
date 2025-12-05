@@ -66,7 +66,6 @@ class Agent:
             game.food.y < game.head.y,  # food up
             game.food.y > game.head.y,  # food down
 
-
             # Bonus existence
             bonus_exists,
 
