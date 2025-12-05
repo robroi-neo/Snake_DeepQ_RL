@@ -1,6 +1,8 @@
 import pygame
 from screen_base import ScreenBase
-from  menu import MenuScreen 
+from menuscreen import MenuScreen 
+from gamescreen import GameScreen
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -10,7 +12,7 @@ class Game:
         # all screens stored here
         self.screens = {
             "menu": MenuScreen(self),
-            # "game": GameScreen(self)
+            "game": GameScreen(self)
         }
 
         self.current_screen = self.screens["menu"]
