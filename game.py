@@ -17,24 +17,28 @@ Point = namedtuple('Point', 'x, y')
 
 # rgb colors
 WHITE = (255, 255, 255)
-RED = (200,0,0)
-GREEN = (0, 200, 0)
-BLUE1 = (0, 0, 255)
-BLUE2 = (0, 100, 255)
-BLACK = (0,0,0)
+SNAKE_FOOD = (34, 34, 34)
+BONUS_FOOD = (214, 52, 52)
+SNAKE_BODY = (34, 34, 34)
+SNAKE_BODY_SHADOW = (156, 174, 142) 
+BACKGROUND = (170,204,153)
 
 BLOCK_SIZE = 20
-SPEED = 4000 
+
+# this is the game's frame rate
+# you may increase this value for faster training speed
+FPS = 2000
 
 class SnakeGameAI:
 
-    def __init__(self, w=640, h=480):
+    def __init__(self, w=480, h=720):
         self.w = w
         self.h = h
         
         # init display
         self.display = pygame.display.set_mode((self.w, self.h))
         pygame.display.set_caption('Snake')
+
         self.clock = pygame.time.Clock()
         self.reset()
 
@@ -44,7 +48,7 @@ class SnakeGameAI:
         self.direction = Direction.RIGHT
 
         # a snake is represented as a list of coordinates.
-        self.head = Point(self.w/2, self.h/2)
+        self.head = Point(self.w // 2, self.h // 2)
         self.snake = [self.head,
                       Point(self.head.x-BLOCK_SIZE, self.head.y),
                       Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]
@@ -95,13 +99,14 @@ class SnakeGameAI:
                 pygame.quit()
                 quit()
         
-        # 2. Move
-        self._move(action) # move based on the action received from the model
-        self.snake.insert(0, self.head) # inserts the new head position to the front of the snake body list.
+        # 2. move only if enough time passed
+        self._move(action)
+        self.snake.insert(0, self.head)
 
-        # 3. Check if game is over
+
         reward = 0
         game_over = False
+        # 3. Check if game is over
         # game over is triggered happens when the snake is in collision or the game is taking too long
         if self.is_collision() or self.frame_iteration > 100*len(self.snake):
             game_over = True
@@ -111,26 +116,24 @@ class SnakeGameAI:
         # 4. Eating Logic
         if self.head == self.food:
             self.score += 1
-
-            #reward of 1 for eating normal food
+            # reward of 1 for eating normal food
             reward = 10
-
             # only normal food increments bonus counter
             self.bonus_counter += 1
 
             # every 8th food spawns bonus
-            if self.bonus_counter == 8:
+            if self.bonus_counter == 4:
                 self._place_bonus()
                 self.bonus_counter = 0
 
             self._place_food()
+            self.frame_iteration -= 5
 
         elif self.bonus is not None and self.head == self.bonus:
             self.score += 10
             reward = 100
             self.bonus = None
             self.bonus_spawn_time = None
-            self._place_food()
 
         else:
             # this is moving forward because i remove the last tail...
@@ -140,13 +143,19 @@ class SnakeGameAI:
         if self.bonus is not None:
             now = pygame.time.get_ticks()
             # print(now - self.bonus_spawn_time)
-            if now - self.bonus_spawn_time >= 4000:  # 4 seconds
+            # make this scale with game speed
+            BASE_BONUS_TIME = 4000
+            bonus_lifetime = BASE_BONUS_TIME * (20 / FPS)
+            if now - self.bonus_spawn_time >= bonus_lifetime:  # 4 seconds
                 self.bonus = None
                 self.bonus_spawn_time = None
 
+        if self.frame_iteration > 50:
+            reward -= 1  # small penalty per step if stalling
+
         # 6. update ui and clock
         self._update_ui()
-        self.clock.tick(SPEED)
+        self.clock.tick(FPS)
         
         # return
         return reward, game_over, self.score
@@ -166,22 +175,73 @@ class SnakeGameAI:
         return False
 
     def _update_ui(self):
-        self.display.fill(BLACK)
+        self.display.fill(BACKGROUND)
 
-        for pt in self.snake:
-            pygame.draw.rect(self.display, BLUE1, pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.display, BLUE2, pygame.Rect(pt.x+4, pt.y+4, 12, 12))
+        # shadow is used for food, snake, and bonus
+        SHADOW_OFFSET_X = 0
+        SHADOW_OFFSET_Y = 4
+        # shadow for food
+        pygame.draw.rect(
+            self.display,
+            SNAKE_BODY_SHADOW,  # you can use a slightly different color if you want
+            (self.food.x + SHADOW_OFFSET_X, self.food.y + SHADOW_OFFSET_Y, BLOCK_SIZE, BLOCK_SIZE),
+            border_radius=4
+        )
 
-        # draw normal food
-        pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
-
-        # draw bonus if exists
+        # normal food
+        pygame.draw.rect(
+            self.display,
+            SNAKE_FOOD,
+            (self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE),
+            border_radius=4
+        )
+        # bonus food
         if self.bonus:
-            pygame.draw.rect(self.display, GREEN, (self.bonus.x, self.bonus.y, BLOCK_SIZE, BLOCK_SIZE))
+            # shadow for bonus
+            pygame.draw.rect(
+                self.display,
+                SNAKE_BODY_SHADOW,  # shadow color (same as normal food shadow)
+                (self.bonus.x + SHADOW_OFFSET_X, self.bonus.y + SHADOW_OFFSET_Y, BLOCK_SIZE, BLOCK_SIZE),
+                border_radius=4
+            )
 
+            # actual bonus food
+            pygame.draw.rect(
+                self.display,
+                BONUS_FOOD,  # your bonus color
+                (self.bonus.x, self.bonus.y, BLOCK_SIZE, BLOCK_SIZE),
+                border_radius=4
+            )
         
+        # draw snake
+        for i, pt in enumerate(self.snake):
+            if i == 0:  # head is always visible
+                draw_shadow = True
+            else:
+                # if previous segment is offset exactly on top of where the shadow would be, skip
+                prev = self.snake[i-1]
+                shadow_rect = pygame.Rect(pt.x + SHADOW_OFFSET_X, pt.y + SHADOW_OFFSET_Y, BLOCK_SIZE, BLOCK_SIZE)
+                body_rect = pygame.Rect(prev.x, prev.y, BLOCK_SIZE, BLOCK_SIZE)
+                draw_shadow = not shadow_rect.colliderect(body_rect)
+            
+            if draw_shadow:
+                pygame.draw.rect(
+                    self.display,
+                    SNAKE_BODY_SHADOW,
+                    (pt.x + SHADOW_OFFSET_X, pt.y + SHADOW_OFFSET_Y, BLOCK_SIZE, BLOCK_SIZE),
+                    border_radius=4
+                )
+            
+            pygame.draw.rect(
+                self.display,
+                SNAKE_BODY,
+                (pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE),
+                border_radius=4
+            )
+
         text = font.render("Score: " + str(self.score), True, WHITE)
-        self.display.blit(text, [0,0])
+        self.display.blit(text, [0, 0])
+
         pygame.display.flip()
 
     def _move(self, action):

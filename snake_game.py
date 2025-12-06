@@ -23,7 +23,7 @@ SNAKE_BODY_SHADOW = (156, 174, 142)
 BACKGROUND = (170,204,153)
 
 BLOCK_SIZE = 20
-SPEED = 60
+FPS = 60
 
 class SnakeGame:
     
@@ -149,7 +149,7 @@ class SnakeGame:
 
         # 6. ui + clock
         self._update_ui()
-        self.clock.tick(SPEED)
+        self.clock.tick(FPS)
         return False, self.score
     
     def _is_collision(self):

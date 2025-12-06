@@ -14,10 +14,11 @@ Enhance or extend the project beyond the scope of the original tutorial by intro
   - Introduce alternative food types (e.g., larger items with higher score rewards for faster consumption).
 - Improve the graphical user interface (GUI) for a more polished presentation.
 - Package the project as a standalone desktop application.
-
+- Implement Early Stopping
 ---
 
 ## Developer Notes
+- patience my child, naa sa mga 150+ pa before mag taas taas ang score
 
 ### Environment Setup (Conda)
 
