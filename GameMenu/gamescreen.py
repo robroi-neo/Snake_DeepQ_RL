@@ -113,13 +113,50 @@ class GameScreen(ScreenBase):
           str(self.selected_speed)+"x",fgcolor=(34,34,34),bgcolor=None,size=14)
         
         title = pygame.image.load('GameMenu/assets/game/game_title.png').convert_alpha()
+        leftContainer = RectWithText(
+                    214,
+                    30,
+                    390,
+                    706,
+                    "",
+                    14,
+                    fill_color=(170,204,153),
+                    text_color=(32,32,32),
+                    border_width=5,
+                    border_color=(32,32,32),
+                    center=False
+        )
+        rightContainer = RectWithText(
+                    604,
+                    30,
+                    390,
+                    706,
+                    "",
+                    14,
+                    fill_color=(170,204,153),
+                    text_color=(32,32,32),
+                    border_width=5,
+                    border_color=(32,32,32),
+                    center=False
+        )
         screen.blit(title,(17,24))
         screen.blit(self.play_img,(32,203))
         screen.blit(self.reset_img,(32,278))
         screen.blit(self.version_img,(32,437))
         screen.blit(self.speed_img,(32,596))
-       
-      
+        leftContainer.draw(screen)
+        rightContainer.draw(screen)
+
+        self.font.render_to(screen,(229,47),
+          "Deep Q-Learning",fgcolor=(34,34,34),bgcolor=None,size=16)
+        self.font.render_to(screen,(619,45),
+          "Brand X",fgcolor=(34,34,34),bgcolor=None,size=16)
+        self.font.render_to(screen,(229,83),
+          "SCORE:",fgcolor=(34,34,34),bgcolor=None,size=16)
+        self.font.render_to(screen,(619,83),
+          "SCORE:",fgcolor=(34,34,34),bgcolor=None,size=16)
+
+
         # For Versions Dropdown 
         if self.version_isActive:
             for version_button,v in self.version_buttons:
@@ -129,6 +166,11 @@ class GameScreen(ScreenBase):
         if self.speed_isActive:
             for speed_button,v in self.speed_buttons:
                 speed_button.draw(screen)
+
+        # PLACE YOUR CODE HERE TO MAKE SURE THAT THE SNAKE IS ON TOP OF THE
+        # CONTAINER
+
+        
           
     
       
