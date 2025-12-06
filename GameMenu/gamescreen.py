@@ -8,7 +8,7 @@ pygame.init()
 clock = pygame.time.Clock()
 
 versions = [1,20,40,80]
-
+speeds = [1,2,4,8,16]
 class GameScreen(ScreenBase):
     def __init__(self, game):
         super().__init__(game)
@@ -23,7 +23,10 @@ class GameScreen(ScreenBase):
         self.version_buttons = []
         self.selected_version = versions[0]
         self.version_isActive = False
-
+        self.speed_rect = self.speed_img.get_rect(topleft=(32,596))
+        self.speed_buttons = []
+        self.selected_speed = speeds[0]
+        self.speed_isActive = False
         for index, v in enumerate(versions):
             version_button = RectWithText(
                 32,
@@ -39,7 +42,21 @@ class GameScreen(ScreenBase):
                 center=False
             )
             self.version_buttons.append((version_button, v))
-
+        for index, speed in enumerate(speeds):
+            speed_button = RectWithText(
+                32,
+                550 - (index * 46),
+                150,
+                50,
+                str(speed) + "x",
+                14,
+                fill_color=(170,204,153),
+                text_color=(32,32,32),
+                border_width=4,
+                border_color=(32,32,32),
+                center=False
+            )
+            self.speed_buttons.append((speed_button, speed))
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RETURN:
@@ -51,12 +68,18 @@ class GameScreen(ScreenBase):
           if self.reset_rect.collidepoint(event.pos):
                 pygame.quit()
                 exit()
-          if self.version_rect.collidepoint(event.pos):
+          if self.version_rect.collidepoint(event.pos) and not self.speed_isActive:
                 self.version_isActive = not self.version_isActive
+          if self.speed_rect.collidepoint(event.pos) and not self.version_isActive:
+                self.speed_isActive = not self.speed_isActive
           for index, (version_button, v) in enumerate(self.version_buttons):
             if  version_button.rect.collidepoint(event.pos) and self.version_isActive:
               self.selected_version = versions[index]
               self.version_isActive = False
+          for index, (speed_button, v) in enumerate(self.speed_buttons):
+            if  speed_button.rect.collidepoint(event.pos) and self.speed_isActive:
+              self.selected_speed = speeds[index]
+              self.speed_isActive = False
         
         mouse_pos = pygame.mouse.get_pos()
 
@@ -68,8 +91,13 @@ class GameScreen(ScreenBase):
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND) 
         if self.version_rect.collidepoint(mouse_pos):
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND) 
+        if self.speed_rect.collidepoint(mouse_pos):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND) 
         for index, (version_button, v) in enumerate(self.version_buttons):
             if  version_button.rect.collidepoint(mouse_pos) and self.version_isActive:
+              pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        for index, (speed_button, v) in enumerate(self.speed_buttons):
+            if  speed_button.rect.collidepoint(mouse_pos) and self.speed_isActive:
               pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
     def draw(self, screen):
         screen.fill((170,204,153))
@@ -82,7 +110,7 @@ class GameScreen(ScreenBase):
         self.font.render_to(screen,(35,547),
           "SPEED:",fgcolor=(34,34,34),bgcolor=None,size=24)
         self.font.render_to(screen,(68,614),
-          "2x",fgcolor=(34,34,34),bgcolor=None,size=14)
+          str(self.selected_speed)+"x",fgcolor=(34,34,34),bgcolor=None,size=14)
         
         title = pygame.image.load('GameMenu/assets/game/game_title.png').convert_alpha()
         screen.blit(title,(17,24))
@@ -94,9 +122,13 @@ class GameScreen(ScreenBase):
       
         # For Versions Dropdown 
         if self.version_isActive:
-            for version_button, v in self.version_buttons:
+            for version_button,v in self.version_buttons:
               
               version_button.draw(screen)
+              
+        if self.speed_isActive:
+            for speed_button,v in self.speed_buttons:
+                speed_button.draw(screen)
           
     
       
