@@ -23,7 +23,7 @@ SNAKE_BODY = (34, 34, 34)
 SNAKE_BODY_SHADOW = (156, 174, 142) 
 BACKGROUND = (170,204,153)
 
-BLOCK_SIZE = 20
+BLOCK_SIZE = 40
 
 # this is the game's frame rate
 # you may increase this value for faster training speed
@@ -31,7 +31,7 @@ FPS = 2000
 
 class SnakeGameAI:
 
-    def __init__(self, w=480, h=720):
+    def __init__(self, w=480, h=640):
         self.w = w
         self.h = h
         

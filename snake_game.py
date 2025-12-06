@@ -22,12 +22,12 @@ SNAKE_BODY = (34, 34, 34)
 SNAKE_BODY_SHADOW = (156, 174, 142) 
 BACKGROUND = (170,204,153)
 
-BLOCK_SIZE = 20
+BLOCK_SIZE = 40
 FPS = 60
 
 class SnakeGame:
     
-    def __init__(self, w=640, h=480):
+    def __init__(self, w=480, h=640):
         self.w = w
         self.h = h
 
