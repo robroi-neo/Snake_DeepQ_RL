@@ -29,7 +29,7 @@ class RectWithText:
             rect.center = self.rect.center
         else:
             # Draw text at left side with padding
-            rect.topright = (self.rect.right - 8, self.rect.y + 18)
+            rect.topright = (self.rect.right - 18, self.rect.y + 18)
 
         # Draw text
         screen.blit(surf, rect)
