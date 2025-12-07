@@ -27,14 +27,14 @@ BLOCK_SIZE = 40
 
 # this is the game's frame rate
 # you may increase this value for faster training speed
-FPS = 2000
 
 class SnakeGameAI:
 
-    def __init__(self, w=480, h=640):
+    def __init__(self, w=480, h=640, fps=2000):
         self.w = w
         self.h = h
         self.BlockSize = BLOCK_SIZE
+        self.fps = fps
         
         # init display
         self.display = pygame.display.set_mode((self.w, self.h))
@@ -147,14 +147,14 @@ class SnakeGameAI:
             # print(now - self.bonus_spawn_time)
             # make this scale with game speed
             BASE_BONUS_TIME = 4000
-            bonus_lifetime = BASE_BONUS_TIME * (20 / FPS)
+            bonus_lifetime = BASE_BONUS_TIME * (20 / self.fps)
             if now - self.bonus_spawn_time >= bonus_lifetime:  # 4 seconds
                 self.bonus = None
                 self.bonus_spawn_time = None
 
         # 6. update ui and clock
         self._update_ui()
-        self.clock.tick(FPS)
+        self.clock.tick(self.fps)
         
         # return
         return reward, game_over, self.score
@@ -247,7 +247,8 @@ class SnakeGameAI:
 
         pygame.display.flip()
 
-    def _move(self, action):
+    def _move(self, action):    
+        
         # action -> [straing, right, left]
         # direction: right, left, up, down
 
@@ -277,3 +278,61 @@ class SnakeGameAI:
             y -= BLOCK_SIZE
 
         self.head = Point(x, y)
+
+    def get_state(self):
+        bs = BLOCK_SIZE
+        head = self.snake[0]
+        point_l = Point(head.x - bs, head.y)
+        point_r = Point(head.x + bs, head.y)
+        point_u = Point(head.x, head.y - bs)
+        point_d = Point(head.x, head.y + bs)
+        
+        dir_l = self.direction == Direction.LEFT
+        dir_r = self.direction == Direction.RIGHT
+        dir_u = self.direction == Direction.UP
+        dir_d = self.direction == Direction.DOWN
+
+        bonus_exists = 1 if self.bonus is not None else 0
+
+        state = [
+            # Danger straight
+            (dir_r and self.is_collision(point_r)) or 
+            (dir_l and self.is_collision(point_l)) or 
+            (dir_u and self.is_collision(point_u)) or 
+            (dir_d and self.is_collision(point_d)),
+
+            # Danger right
+            (dir_u and self.is_collision(point_r)) or 
+            (dir_d and self.is_collision(point_l)) or 
+            (dir_l and self.is_collision(point_u)) or 
+            (dir_r and self.is_collision(point_d)),
+
+            # Danger left
+            (dir_d and self.is_collision(point_r)) or 
+            (dir_u and self.is_collision(point_l)) or 
+            (dir_r and self.is_collision(point_u)) or 
+            (dir_l and self.is_collision(point_d)),
+            
+            # Move direction
+            dir_l,
+            dir_r,
+            dir_u,
+            dir_d,
+            
+            # Food location 
+            self.food.x < self.head.x,  # food left
+            self.food.x > self.head.x,  # food right
+            self.food.y < self.head.y,  # food up
+            self.food.y > self.head.y,  # food down
+
+            # Bonus existence
+            bonus_exists,
+
+            # Bonus Food Location (only if exists)
+            0 if self.bonus is None else self.bonus.x < self.head.x,
+            0 if self.bonus is None else self.bonus.x > self.head.x,
+            0 if self.bonus is None else self.bonus.y < self.head.y,
+            0 if self.bonus is None else self.bonus.y > self.head.y
+        ]
+
+        return np.array(state, dtype=int)
