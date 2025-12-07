@@ -13,7 +13,7 @@ class RectWithText:
         self.border_width = border_width
         self.center = center
 
-        self.font = pygame.freetype.Font("GameMenu/assets/menu/PressStart2p-Regular.ttf", font_size)
+        self.font = pygame.freetype.Font("src/GameMenu/assets/menu/PressStart2p-Regular.ttf", font_size)
         self.text_color = text_color
 
     def draw(self, screen):

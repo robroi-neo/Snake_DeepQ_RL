@@ -8,9 +8,9 @@ pygame.init()
 class MenuScreen(ScreenBase):
     def __init__(self, game):
         super().__init__(game)
-        self.font = pygame.freetype.Font('GameMenu/assets/menu/PressStart2p-Regular.ttf', 50)
-        self.play_img = pygame.image.load('GameMenu/assets/menu/play_button.png').convert_alpha()
-        self.quit_img = pygame.image.load('GameMenu/assets/menu/quit_button.png').convert_alpha()
+        self.font = pygame.freetype.Font('src/GameMenu/assets/menu/PressStart2p-Regular.ttf', 50)
+        self.play_img = pygame.image.load('src/GameMenu/assets/menu/play_button.png').convert_alpha()
+        self.quit_img = pygame.image.load('src/GameMenu/assets/menu/quit_button.png').convert_alpha()
         self.play_rect = self.play_img.get_rect(topleft=(412, 452))
         self.quit_rect = self.quit_img.get_rect(topleft=(412, 552))
     def handle_event(self, event):
@@ -30,7 +30,7 @@ class MenuScreen(ScreenBase):
         screen.fill((170,204,153))
         mouse_pos = pygame.mouse.get_pos()
       
-        title = pygame.image.load('GameMenu/assets/menu/menu_title.png').convert_alpha()
+        title = pygame.image.load('src/GameMenu/assets/menu/menu_title.png').convert_alpha()
 
         self.font.render_to(screen,(442,692),
             "DISCLAIMER",fgcolor=(34,34,34),bgcolor=None,size=14)

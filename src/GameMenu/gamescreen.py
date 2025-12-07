@@ -12,11 +12,11 @@ speeds = [1,2,4,8,16]
 class GameScreen(ScreenBase):
     def __init__(self, game):
         super().__init__(game)
-        self.font = pygame.freetype.Font('GameMenu/assets/menu/PressStart2p-Regular.ttf', 50)
-        self.play_img = pygame.image.load('GameMenu/assets/game/play.png').convert_alpha()
-        self.reset_img = pygame.image.load('GameMenu/assets/game/reset.png').convert_alpha()
-        self.version_img = pygame.image.load('GameMenu/assets/game/dropdown.png').convert_alpha()
-        self.speed_img = pygame.image.load('GameMenu/assets/game/dropdown.png').convert_alpha()
+        self.font = pygame.freetype.Font('src/GameMenu/assets/menu/PressStart2p-Regular.ttf', 50)
+        self.play_img = pygame.image.load('src/GameMenu/assets/game/play.png').convert_alpha()
+        self.reset_img = pygame.image.load('src/GameMenu/assets/game/reset.png').convert_alpha()
+        self.version_img = pygame.image.load('src/GameMenu/assets/game/dropdown.png').convert_alpha()
+        self.speed_img = pygame.image.load('src/GameMenu/assets/game/dropdown.png').convert_alpha()
         self.play_rect = self.play_img.get_rect(topleft=(32, 203))
         self.reset_rect = self.reset_img.get_rect(topleft=(32, 278))
         self.version_rect = self.version_img.get_rect(topleft=(32,437))
@@ -112,7 +112,7 @@ class GameScreen(ScreenBase):
         self.font.render_to(screen,(68,614),
           str(self.selected_speed)+"x",fgcolor=(34,34,34),bgcolor=None,size=14)
         
-        title = pygame.image.load('GameMenu/assets/game/game_title.png').convert_alpha()
+        title = pygame.image.load('src/GameMenu/assets/game/game_title.png').convert_alpha()
         leftContainer = RectWithText(
                     214,
                     30,
