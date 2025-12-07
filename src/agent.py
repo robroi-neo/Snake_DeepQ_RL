@@ -22,7 +22,7 @@ class Agent:
 
 
     def get_state(self, game):
-        bs = game.BLOCK_SIZE
+        bs = game.BlockSize
         head = game.snake[0]
         point_l = Point(head.x - bs, head.y)
         point_r = Point(head.x + bs, head.y)

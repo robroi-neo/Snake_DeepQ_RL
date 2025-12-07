@@ -8,17 +8,14 @@ This project is currently a direct implementation based on a tutorial previously
 Enhance or extend the project beyond the scope of the original tutorial by introducing additional features and improvements.
 
 ### Planned Features
-- Save each new training milestone (e.g., when the model reaches a new high score).
-- Potential gameplay modifications:
-  - Add walls or obstacles.
-  - Introduce alternative food types (e.g., larger items with higher score rewards for faster consumption).
-- Improve the graphical user interface (GUI) for a more polished presentation.
-- Package the project as a standalone desktop application.
-- Implement Early Stopping
----
+- Implement a better reward shaping for the model.
+- Implement a second model for comparison
+
+- Implement a new model first then make them integratable with the gui. THEN improve reward shaping
 
 ## Developer Notes
 - patience my child, naa sa mga 150+ pa before mag taas taas ang score
+
 
 ### Environment Setup (Conda)
 

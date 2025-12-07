@@ -34,6 +34,7 @@ class SnakeGameAI:
     def __init__(self, w=480, h=640):
         self.w = w
         self.h = h
+        self.BlockSize = BLOCK_SIZE
         
         # init display
         self.display = pygame.display.set_mode((self.w, self.h))
@@ -103,35 +104,36 @@ class SnakeGameAI:
         self._move(action)
         self.snake.insert(0, self.head)
 
-
         reward = 0
         game_over = False
         # 3. Check if game is over
-        # game over is triggered happens when the snake is in collision or the game is taking too long
+        # is stalling
         if self.is_collision() or self.frame_iteration > 100*len(self.snake):
             game_over = True
             reward = -10
+            return reward, game_over, self.score
+        # if collision
+        if self.is_self_collision(): # separated this shit incase gusto nako lahi ug reward
+            game_over = True
+            reward = -10     
             return reward, game_over, self.score
 
         # 4. Eating Logic
         if self.head == self.food:
             self.score += 1
-            # reward of 1 for eating normal food
             reward = 10
-            # only normal food increments bonus counter
             self.bonus_counter += 1
 
             # every 8th food spawns bonus
-            if self.bonus_counter == 4:
+            if self.bonus_counter == 8:
                 self._place_bonus()
                 self.bonus_counter = 0
 
             self._place_food()
-            self.frame_iteration -= 5
 
         elif self.bonus is not None and self.head == self.bonus:
             self.score += 10
-            reward = 100
+            reward = 50
             self.bonus = None
             self.bonus_spawn_time = None
 
@@ -150,9 +152,6 @@ class SnakeGameAI:
                 self.bonus = None
                 self.bonus_spawn_time = None
 
-        if self.frame_iteration > 50:
-            reward -= 1  # small penalty per step if stalling
-
         # 6. update ui and clock
         self._update_ui()
         self.clock.tick(FPS)
@@ -168,10 +167,14 @@ class SnakeGameAI:
         # hits boundary
         if pt.x > self.w - BLOCK_SIZE or pt.x < 0 or pt.y > self.h - BLOCK_SIZE or pt.y < 0:
             return True
+        return False
+
+    def is_self_collision(self, pt=None):
+        if pt is None:
+            pt = self.head
         # hits itself
         if pt in self.snake[1:]:
             return True
-
         return False
 
     def _update_ui(self):
