@@ -142,9 +142,12 @@ def train():
             agent.n_games += 1
             agent.train_long_memory()
 
-            if score > record:
-                record = score
-                agent.model.save()
+            if score - record >= 30:  # breakthrough threshold
+                agent.model.save(f"breakthrough_{score}.pth")
+            
+            if agent.n_games % 100 == 0:
+                agent.model.save(f"checkpoint_{agent.n_games}.pth")
+                print(f"Checkpoint saved at game {agent.n_games}")
 
             print('Game', agent.n_games, 'Score', score, 'Record:', record)
 
