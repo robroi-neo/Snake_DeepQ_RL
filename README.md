@@ -12,7 +12,6 @@ Enhance or extend the project beyond the scope of the original tutorial by intro
 - Implement a second model for comparison
 - Improve state representation
 
-
 ## Developer Notes
 - patience my child, naa sa mga 150+ pa before mag taas taas ang score
 - Implement a new model first then make them integratable with the gui. THEN improve reward shaping

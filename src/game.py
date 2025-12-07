@@ -4,6 +4,10 @@ from enum import Enum
 from collections import namedtuple
 import numpy as np 
 
+# PLEASE DON'T TOUCH THIS FILE PARA WALAY CONFILCT PLES KAPOY MAG RESOLVE UG MERGE CONFLICS HUHUHUHU MALUOY KA
+# MAG EDIT PAKOG REWARD SHAPING DIRI
+
+
 pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
 
