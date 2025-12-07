@@ -1,7 +1,5 @@
 # Project 
 # remove from git ignore when na configure na nako
-model/
-
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

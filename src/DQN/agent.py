@@ -2,6 +2,11 @@ import torch
 import random
 import numpy as np
 from collections import deque
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from game import SnakeGameAI, Direction, Point
 from model import Linear_QNet, QTrainer
 from helper import plot
@@ -142,8 +147,8 @@ def train():
             agent.n_games += 1
             agent.train_long_memory()
 
-            if score - record >= 30:  # breakthrough threshold
-                agent.model.save(f"breakthrough_{score}.pth")
+            # if score - record >= 30:  # breakthrough threshold
+            #    agent.model.save(f"breakthrough_{score}.pth")
             
             if agent.n_games % 100 == 0:
                 agent.model.save(f"checkpoint_{agent.n_games}.pth")

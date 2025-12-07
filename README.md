@@ -8,13 +8,14 @@ This project is currently a direct implementation based on a tutorial previously
 Enhance or extend the project beyond the scope of the original tutorial by introducing additional features and improvements.
 
 ### Planned Features
-- Implement a better reward shaping for the model.
+- Improve reward shaping for the model.
 - Implement a second model for comparison
+- Improve state representation
 
-- Implement a new model first then make them integratable with the gui. THEN improve reward shaping
 
 ## Developer Notes
 - patience my child, naa sa mga 150+ pa before mag taas taas ang score
+- Implement a new model first then make them integratable with the gui. THEN improve reward shaping
 
 
 ### Environment Setup (Conda)

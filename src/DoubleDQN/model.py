@@ -16,19 +16,19 @@ class Linear_QNet(nn.Module):
         return x
 
     def save(self, file_name='model.pth'):
-        model_folder_path = './model'
+        model_folder_path = './model/DoubleDQN'
         if not os.path.exists(model_folder_path):
             os.makedirs(model_folder_path)
 
         file_name = os.path.join(model_folder_path, file_name)
         torch.save(self.state_dict(), file_name)
 
-
 class QTrainer:
-    def __init__(self, model, lr, gamma):
+    def __init__(self, model, target_model, lr, gamma):
         self.lr = lr
         self.gamma = gamma
-        self.model = model
+        self.model = model              # online network
+        self.target_model = target_model # target network
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
@@ -37,32 +37,40 @@ class QTrainer:
         next_state = torch.tensor(next_state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
-        # (n, x)
 
         if len(state.shape) == 1:
-            # (1, x)
             state = torch.unsqueeze(state, 0)
             next_state = torch.unsqueeze(next_state, 0)
             action = torch.unsqueeze(action, 0)
             reward = torch.unsqueeze(reward, 0)
-            done = (done, )
+            done = (done,)
 
-        # 1: predicted Q values with current state
+        # Online prediction
         pred = self.model(state)
 
         target = pred.clone()
+
         for idx in range(len(done)):
             Q_new = reward[idx]
+
             if not done[idx]:
-                Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
+                # ------- Double DQN part -------
+                # Step 1: action chosen by online network
+                next_q_online = self.model(next_state[idx])
+                max_action = torch.argmax(next_q_online).item()
+
+                # Step 2: value taken from target network
+                next_q_target = self.target_model(next_state[idx])
+                Q_new = reward[idx] + self.gamma * next_q_target[max_action]
+                # --------------------------------
 
             target[idx][torch.argmax(action[idx]).item()] = Q_new
-    
-        # 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
-        # pred.clone()
-        # preds[argmax(action)] = Q_new
-        self.optimizer.zero_grad()
-        loss = self.criterion(target, pred)
-        loss.backward()
 
+        self.optimizer.zero_grad()
+        loss = self.criterion(pred, target)
+        loss.backward()
         self.optimizer.step()
+
+    def update_target(self):
+        """Copy weights from online model to target model."""
+        self.target_model.load_state_dict(self.model.state_dict())
