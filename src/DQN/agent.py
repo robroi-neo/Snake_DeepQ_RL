@@ -147,6 +147,7 @@ def train():
             agent.n_games += 1
             agent.train_long_memory()
 
+            record = max(record, score)
             # if score - record >= 30:  # breakthrough threshold
             #    agent.model.save(f"breakthrough_{score}.pth")
             
