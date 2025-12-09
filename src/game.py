@@ -142,7 +142,7 @@ class SnakeGameAI:
 
         elif self.bonus is not None and self.head == self.bonus:
             self.score += 1
-            reward += 20
+            reward += 50
             self.bonus = None
             self.bonus_spawn_time = None
 

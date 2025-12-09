@@ -27,7 +27,7 @@ FPS = 60
 
 class SnakeGame:
     
-    def __init__(self, w=480, h=640):
+    def __init__(self, w=400, h=400):
         self.w = w
         self.h = h
 

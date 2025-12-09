@@ -19,7 +19,7 @@ class Agent:
 
     def __init__(self):
         self.n_games = 0
-        self.epsilon = 0 # randomness
+        self.epsilon = 1 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
         self.model = Linear_QNet(16, 256, 3)
@@ -39,7 +39,9 @@ class Agent:
         dir_u = game.direction == Direction.UP
         dir_d = game.direction == Direction.DOWN
 
-        bonus_exists = 1 if game.bonus is not None else 0
+        # normalize
+        bonus_time_norm = (8 - game.bonus_counter) / 8
+
 
         state = [
             # Danger straight
@@ -73,7 +75,7 @@ class Agent:
             game.food.y > game.head.y,  # food down
 
             # Bonus existence
-            bonus_exists,
+            bonus_time_norm,
 
             # Bonus Food Location (only if exists)
             0 if game.bonus is None else game.bonus.x < game.head.x,
@@ -82,7 +84,7 @@ class Agent:
             0 if game.bonus is None else game.bonus.y > game.head.y
         ]
 
-        return np.array(state, dtype=int)
+        return np.array(state, dtype=float)
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done)) # popleft if MAX_MEMORY is reached
