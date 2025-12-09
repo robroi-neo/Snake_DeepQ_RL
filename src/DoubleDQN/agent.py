@@ -15,6 +15,10 @@ MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
 
+# Change States
+# Make the values discrete instead of 
+
+
 class Agent:
 
     def __init__(self):
@@ -49,7 +53,10 @@ class Agent:
         dir_u = game.direction == Direction.UP
         dir_d = game.direction == Direction.DOWN
 
+        # Make this into a countdown timer for bonus
         bonus_exists = 1 if game.bonus is not None else 0
+
+        # transform direction into continuos values
 
         state = [
             # Danger straight
@@ -156,6 +163,8 @@ def train():
             game.reset()
             agent.n_games += 1
             agent.train_long_memory()
+
+            record = max(record, score)
 
             # if score - record >= 30:  # breakthrough threshold
             #    agent.model.save(f"breakthrough_{score}.pth")
