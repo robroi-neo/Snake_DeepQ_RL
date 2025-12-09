@@ -34,7 +34,7 @@ BLOCK_SIZE = 40
 
 class SnakeGameAI:
 
-    def __init__(self, w=480, h=640, fps=2000):
+    def __init__(self, w=400, h=400, fps=2000):
         self.w = w
         self.h = h
         self.BlockSize = BLOCK_SIZE
@@ -108,27 +108,32 @@ class SnakeGameAI:
         self._move(action)
         self.snake.insert(0, self.head)
 
+        # --- distance-based reward shaping ---
+        # compute old & new food distance
+        old_distance = abs(self.snake[1].x - self.food.x) + abs(self.snake[1].y - self.food.y)
+        new_distance = abs(self.head.x - self.food.x) + abs(self.head.y - self.food.y)
+
         reward = 0
         game_over = False
+
         # 3. Check if game is over
-        # is stalling
-        if self.is_collision() or self.frame_iteration > 100*len(self.snake):
+        if self.is_collision() or self.frame_iteration > 100 * len(self.snake):
             game_over = True
             reward = -10
             return reward, game_over, self.score
-        # if collision
-        if self.is_self_collision(): # separated this shit incase gusto nako lahi ug reward
-            game_over = True
-            reward = -10     
-            return reward, game_over, self.score
 
-        # 4. Eating Logic
+        # distance shaping BEFORE other rewards
+        if new_distance < old_distance:
+            reward += 1      # moved closer
+        elif new_distance > old_distance:
+            reward -= 1      # moved farther
+
+        # 4. Eating logic
         if self.head == self.food:
             self.score += 1
-            reward = 10
+            reward += 10      # keep original
             self.bonus_counter += 1
 
-            # every 8th food spawns bonus
             if self.bonus_counter == 8:
                 self._place_bonus()
                 self.bonus_counter = 0
@@ -136,14 +141,14 @@ class SnakeGameAI:
             self._place_food()
 
         elif self.bonus is not None and self.head == self.bonus:
-            self.score += 10
-            reward = 50
+            self.score += 1
+            reward += 20
             self.bonus = None
             self.bonus_spawn_time = None
 
         else:
-            # this is moving forward because i remove the last tail...
             self.snake.pop()
+
 
         # 5. bonus timer expiration
         if self.bonus is not None:
@@ -171,12 +176,6 @@ class SnakeGameAI:
         # hits boundary
         if pt.x > self.w - BLOCK_SIZE or pt.x < 0 or pt.y > self.h - BLOCK_SIZE or pt.y < 0:
             return True
-        return False
-
-    def is_self_collision(self, pt=None):
-        if pt is None:
-            pt = self.head
-        # hits itself
         if pt in self.snake[1:]:
             return True
         return False
