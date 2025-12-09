@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from game import SnakeGameAI
-from model import Linear_QNet
+from DQN.model import Linear_QNet
 
 # This run_model.py is used to run a pre-trained model.
 # the model can be found in project/model/...
@@ -9,7 +9,7 @@ from model import Linear_QNet
 
 # --- CONFIG ---
 # Ikaw na bahala sa API para ma dynamic ang pag send and shit sa model path...
-MODEL_PATH = "model/model.pth"
+MODEL_PATH = "model/DQN/checkpoint_100.pth"
 
 def load_model():
     """Load trained model from file."""
