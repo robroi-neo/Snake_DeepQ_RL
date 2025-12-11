@@ -22,11 +22,8 @@ class Agent:
         self.epsilon = 1 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(16, 256, 3)
+        self.model = Linear_QNet(19, 256, 3)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-
-
-    def get_state(self, game):
         bs = game.BlockSize
         head = game.snake[0]
         point_l = Point(head.x - bs, head.y)
@@ -41,7 +38,6 @@ class Agent:
 
         # normalize
         bonus_time_norm = (8 - game.bonus_counter) / 8
-
 
         state = [
             # Danger straight
@@ -62,6 +58,24 @@ class Agent:
             (dir_r and game.is_collision(point_u)) or 
             (dir_l and game.is_collision(point_d)),
             
+            # Me sa harap
+            (dir_r and game.is_self_collision(point_r)) or 
+            (dir_l and game.is_self_collision(point_l)) or 
+            (dir_u and game.is_self_collision(point_u)) or 
+            (dir_d and game.is_self_collision(point_d)),
+
+            # Me sa right
+            (dir_u and game.is_self_collision(point_r)) or 
+            (dir_d and game.is_self_collision(point_l)) or 
+            (dir_l and game.is_self_collision(point_u)) or 
+            (dir_r and game.is_self_collision(point_d)),
+
+            # Me sa left
+            (dir_d and game.is_self_collision(point_r)) or 
+            (dir_u and game.is_self_collision(point_l)) or 
+            (dir_r and game.is_self_collision(point_u)) or 
+            (dir_l and game.is_self_collision(point_d)),
+
             # Move direction
             dir_l,
             dir_r,
@@ -128,14 +142,14 @@ def train():
     game = SnakeGameAI()
     while True:
         # get old state
-        state_old = agent.get_state(game)
+        state_old = game.get_state()
 
         # get move
         final_move = agent.get_action(state_old)
 
         # perform move and get new state
         reward, done, score = game.play_step(final_move)
-        state_new = agent.get_state(game)
+        state_new = game.get_state()
 
         # train short memory
         agent.train_short_memory(state_old, final_move, reward, state_new, done)
