@@ -2,11 +2,6 @@ import torch
 import random
 import numpy as np
 from collections import deque
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from game import SnakeGameAI, Direction, Point
 from model import Linear_QNet, QTrainer
 from helper import plot
@@ -22,83 +17,8 @@ class Agent:
         self.epsilon = 1 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(19, 256, 3)
+        self.model = Linear_QNet(16, 256, 3)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        bs = game.BlockSize
-        head = game.snake[0]
-        point_l = Point(head.x - bs, head.y)
-        point_r = Point(head.x + bs, head.y)
-        point_u = Point(head.x, head.y - bs)
-        point_d = Point(head.x, head.y + bs)
-        
-        dir_l = game.direction == Direction.LEFT
-        dir_r = game.direction == Direction.RIGHT
-        dir_u = game.direction == Direction.UP
-        dir_d = game.direction == Direction.DOWN
-
-        # normalize
-        bonus_time_norm = (8 - game.bonus_counter) / 8
-
-        state = [
-            # Danger straight
-            (dir_r and game.is_collision(point_r)) or 
-            (dir_l and game.is_collision(point_l)) or 
-            (dir_u and game.is_collision(point_u)) or 
-            (dir_d and game.is_collision(point_d)),
-
-            # Danger right
-            (dir_u and game.is_collision(point_r)) or 
-            (dir_d and game.is_collision(point_l)) or 
-            (dir_l and game.is_collision(point_u)) or 
-            (dir_r and game.is_collision(point_d)),
-
-            # Danger left
-            (dir_d and game.is_collision(point_r)) or 
-            (dir_u and game.is_collision(point_l)) or 
-            (dir_r and game.is_collision(point_u)) or 
-            (dir_l and game.is_collision(point_d)),
-            
-            # Me sa harap
-            (dir_r and game.is_self_collision(point_r)) or 
-            (dir_l and game.is_self_collision(point_l)) or 
-            (dir_u and game.is_self_collision(point_u)) or 
-            (dir_d and game.is_self_collision(point_d)),
-
-            # Me sa right
-            (dir_u and game.is_self_collision(point_r)) or 
-            (dir_d and game.is_self_collision(point_l)) or 
-            (dir_l and game.is_self_collision(point_u)) or 
-            (dir_r and game.is_self_collision(point_d)),
-
-            # Me sa left
-            (dir_d and game.is_self_collision(point_r)) or 
-            (dir_u and game.is_self_collision(point_l)) or 
-            (dir_r and game.is_self_collision(point_u)) or 
-            (dir_l and game.is_self_collision(point_d)),
-
-            # Move direction
-            dir_l,
-            dir_r,
-            dir_u,
-            dir_d,
-            
-            # Food location 
-            game.food.x < game.head.x,  # food left
-            game.food.x > game.head.x,  # food right
-            game.food.y < game.head.y,  # food up
-            game.food.y > game.head.y,  # food down
-
-            # Bonus existence
-            bonus_time_norm,
-
-            # Bonus Food Location (only if exists)
-            0 if game.bonus is None else game.bonus.x < game.head.x,
-            0 if game.bonus is None else game.bonus.x > game.head.x,
-            0 if game.bonus is None else game.bonus.y < game.head.y,
-            0 if game.bonus is None else game.bonus.y > game.head.y
-        ]
-
-        return np.array(state, dtype=float)
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done)) # popleft if MAX_MEMORY is reached
@@ -171,7 +91,7 @@ def train():
                 agent.model.save(f"checkpoint_{agent.n_games}.pth")
                 print(f"Checkpoint saved at game {agent.n_games}")
 
-            print('Game', agent.n_games, 'Score', score, 'Record:', record)
+            print('Game', agent.n_games, 'Score', score, 'Record:', record, 'frames', game.frame_iteration)
 
             plot_scores.append(score)
             total_score += score

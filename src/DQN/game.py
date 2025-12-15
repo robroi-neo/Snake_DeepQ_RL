@@ -29,14 +29,14 @@ BACKGROUND = (170,204,153)
 
 BLOCK_SIZE = 40
 
-# this is the game's frame rate
+# this is the self's frame rate
 # you may increase this value for faster training speed
 
 class SnakeGameAI:
 
-    def __init__(self, w=400, h=400, fps=2000):
-        self.w = w
-        self.h = h
+    def __init__(self, w=20, h=20, fps=2000):
+        self.w = w * 40
+        self.h = h * 40
         self.BlockSize = BLOCK_SIZE
         self.fps = fps
         
@@ -124,9 +124,9 @@ class SnakeGameAI:
 
         # distance shaping BEFORE other rewards
         if new_distance < old_distance:
-            reward += 1      # moved closer
+            reward += 0.1      # moved closer
         elif new_distance > old_distance:
-            reward -= 1      # moved farther
+            reward -= 0.1      # moved farther
 
         # 4. Eating logic
         if self.head == self.food:
@@ -141,7 +141,7 @@ class SnakeGameAI:
             self._place_food()
 
         elif self.bonus is not None and self.head == self.bonus:
-            self.score += 1
+            self.score += 10
             reward += 50
             self.bonus = None
             self.bonus_spawn_time = None
@@ -169,13 +169,20 @@ class SnakeGameAI:
         return reward, game_over, self.score
 
     def is_collision(self, pt=None):
-        """check if snake is outside the map or eats himself wink"""
+        """check if snake is outside the map"""
         if pt is None:
             pt = self.head
         
         # hits boundary
         if pt.x > self.w - BLOCK_SIZE or pt.x < 0 or pt.y > self.h - BLOCK_SIZE or pt.y < 0:
             return True
+        if pt in self.snake[1:]:
+            return True
+        return False
+
+    def is_self_collision(self, pt=None):
+        if pt is None:
+            pt = self.head
         if pt in self.snake[1:]:
             return True
         return False
@@ -282,6 +289,7 @@ class SnakeGameAI:
 
         self.head = Point(x, y)
 
+    # implement raycasting? ... 
     def get_state(self):
         bs = BLOCK_SIZE
         head = self.snake[0]
@@ -295,7 +303,8 @@ class SnakeGameAI:
         dir_u = self.direction == Direction.UP
         dir_d = self.direction == Direction.DOWN
 
-        bonus_exists = 1 if self.bonus is not None else 0
+        # normalize
+        bonus_time_norm = (8 - self.bonus_counter) / 8
 
         state = [
             # Danger straight
@@ -315,7 +324,7 @@ class SnakeGameAI:
             (dir_u and self.is_collision(point_l)) or 
             (dir_r and self.is_collision(point_u)) or 
             (dir_l and self.is_collision(point_d)),
-            
+
             # Move direction
             dir_l,
             dir_r,
@@ -329,7 +338,7 @@ class SnakeGameAI:
             self.food.y > self.head.y,  # food down
 
             # Bonus existence
-            bonus_exists,
+            bonus_time_norm,
 
             # Bonus Food Location (only if exists)
             0 if self.bonus is None else self.bonus.x < self.head.x,
@@ -337,5 +346,7 @@ class SnakeGameAI:
             0 if self.bonus is None else self.bonus.y < self.head.y,
             0 if self.bonus is None else self.bonus.y > self.head.y
         ]
+        return np.array(state, dtype=float)
 
-        return np.array(state, dtype=int)
+    def get_frame_iteration(self):
+        return self.frame_iteration
