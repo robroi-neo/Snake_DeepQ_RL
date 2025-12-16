@@ -10,7 +10,8 @@ from DQN.model import Linear_QNet
 # --- CONFIG ---
 # Ikaw na bahala sa API para ma dynamic ang pag send and shit sa model path...
 
-DQN_PATH = "model/DQN/checkpoint_300.pth"
+DQN_PATH = "model/DQN/checkpoint_800.pth"
+MODEL_PATH = DQN_PATH
 
 
 def load_model(path):

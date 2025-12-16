@@ -18,6 +18,24 @@ def plot(scores, mean_scores):
     plt.show(block=False)
     plt.pause(.1)
 
+def save_plot(scores, mean_scores, iteration):
+    if iteration % 250 != 0:
+        return  # do nothing except every 250th iteration
+
+    plt.clf()
+    plt.title('Training...')
+    plt.xlabel('Number of Games')
+    plt.ylabel('Score')
+    plt.plot(scores)
+    plt.plot(mean_scores)
+    plt.ylim(ymin=0)
+
+    plt.text(len(scores)-1, scores[-1], str(scores[-1]))
+    plt.text(len(mean_scores)-1, mean_scores[-1], str(mean_scores[-1]))
+
+    plt.savefig(f"plots/DQN/plot_{iteration}.png")
+    plt.close()
+
 def distance_to_body(head, body, w, h):
     # returns normalized smallest distance in each direction
     up = down = left = right = 1.0  # default no-body-in-direction

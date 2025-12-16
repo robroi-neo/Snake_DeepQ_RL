@@ -5,7 +5,11 @@ from collections import deque
 from game import SnakeGameAI, Direction, Point
 from model import Dueling_QNet, QTrainer
 
-from helper import plot
+from helper import save_plot
+
+import os
+os.makedirs("model/DuelDQN", exist_ok=True)
+
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
@@ -104,7 +108,7 @@ def train():
             #    agent.model.save(f"breakthrough_{score}.pth")
             
             if agent.n_games % 100 == 0:
-                agent.model.save(f"model/DuelDQN/checkpoint_{agent.n_games}.pth")
+                agent.model.save(f"checkpoint_{agent.n_games}.pth")
                 print(f"Checkpoint saved at game {agent.n_games}")
 
             print('Game', agent.n_games, 'Score', score, 'Record:', record, 'frames', game.frame_iteration)
@@ -113,7 +117,7 @@ def train():
             total_score += score
             mean_score = total_score / agent.n_games
             plot_mean_scores.append(mean_score)
-            plot(plot_scores, plot_mean_scores)
+            save_plot(plot_scores, plot_mean_scores, agent.n_games)
 
 
 if __name__ == '__main__':
