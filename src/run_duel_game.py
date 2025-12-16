@@ -7,10 +7,10 @@ from DuelDQN.model import Dueling_QNet   # 👈 dueling model
 MODEL_PATH = "model/DuelDQN/checkpoint_2500.pth"
 
 
-def load_model():
+def load_model(path):
     """Load trained Dueling DQN model."""
     model = Dueling_QNet(16, 256, 3)  # input, hidden, output
-    model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu"))
+    model.load_state_dict(torch.load(path, map_location="cpu"))
     model.eval()
     return model
 

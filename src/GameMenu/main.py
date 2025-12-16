@@ -11,8 +11,8 @@ class Game:
 
         # all screens stored here
         self.screens = {
-            "menu": MenuScreen(self),
-            "game": GameScreen(self)
+            "menu": MenuScreen(self,),
+            "game": GameScreen(self,self.screen)
         }
 
         self.current_screen = self.screens["menu"]

@@ -34,29 +34,41 @@ BLOCK_SIZE = 40
 
 class SnakeGameAI:
 
-    def __init__(self, w=20, h=20, fps=2000):
-        self.w = w * 40
-        self.h = h * 40
+    def __init__(self, w=800, h=800, fps=2000,surface = None):
+        self.w = w 
+        self.h = h 
         self.BlockSize = BLOCK_SIZE
         self.fps = fps
-        
+        if surface is None:
+            # default behavior (normal training window)
+            self.display = pygame.display.set_mode((self.w, self.h))
+        else:
+            # draw on external surface (another screen or area)
+            self.display = surface
         # init display
-        self.display = pygame.display.set_mode((self.w, self.h))
+   
         pygame.display.set_caption('Snake')
-
+        self.game_over = False
         self.clock = pygame.time.Clock()
         self.reset()
 
     def reset(self):
-        """ The reset function will reset the snake length, score, frame_iteration back to 0. It will also randomly spawn a new food in the map."""
         # reset game state
         self.direction = Direction.RIGHT
 
+        # FIX: Ensure head starts on grid-aligned position
+        # Calculate center in terms of blocks, then convert to pixels
+        center_x_blocks = (self.w // BLOCK_SIZE) // 2
+        center_y_blocks = (self.h // BLOCK_SIZE) // 2
+        
+        center_x = center_x_blocks * BLOCK_SIZE
+        center_y = center_y_blocks * BLOCK_SIZE
+        
         # a snake is represented as a list of coordinates.
-        self.head = Point(self.w // 2, self.h // 2)
+        self.head = Point(center_x, center_y)
         self.snake = [self.head,
-                      Point(self.head.x-BLOCK_SIZE, self.head.y),
-                      Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]
+                    Point(self.head.x - BLOCK_SIZE, self.head.y),
+                    Point(self.head.x - (2 * BLOCK_SIZE), self.head.y)]
 
         self.score = 0
 
@@ -67,7 +79,6 @@ class SnakeGameAI:
         self.food = None
         self._place_food()
         self.frame_iteration = 0
-
     def _place_food(self):
         """ Randomly Place food in the map """
         x = random.randint(0, (self.w-BLOCK_SIZE)//BLOCK_SIZE)*BLOCK_SIZE
@@ -98,8 +109,14 @@ class SnakeGameAI:
         # every step increases frame iteration by 1. this will be used to calculate how long the game is running
         self.frame_iteration += 1
         
-    
+        # 1. collect user input -> exits the game
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        
         # 2. move only if enough time passed
+        
         self._move(action)
         self.snake.insert(0, self.head)
 
@@ -113,7 +130,7 @@ class SnakeGameAI:
 
         # 3. Check if game is over
         if self.is_collision() or self.frame_iteration > 100 * len(self.snake):
-            game_over = True
+            self.game_over = True
             reward = -10
             return reward, game_over, self.score
 
@@ -185,6 +202,9 @@ class SnakeGameAI:
     def _update_ui(self):
         self.display.fill(BACKGROUND)
 
+        if(self.game_over):
+            return
+        
         # shadow is used for food, snake, and bonus
         SHADOW_OFFSET_X = 0
         SHADOW_OFFSET_Y = 4
@@ -220,7 +240,8 @@ class SnakeGameAI:
                 (self.bonus.x, self.bonus.y, BLOCK_SIZE, BLOCK_SIZE),
                 border_radius=4
             )
-        
+        if self.head == self.food:
+          print("Food eaten!")
         # draw snake
         for i, pt in enumerate(self.snake):
             if i == 0:  # head is always visible
@@ -246,11 +267,7 @@ class SnakeGameAI:
                 (pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE),
                 border_radius=4
             )
-
-        text = font.render("Score: " + str(self.score), True, WHITE)
-        self.display.blit(text, [0, 0])
-
-        pygame.display.flip()
+  
 
     def _move(self, action):    
         

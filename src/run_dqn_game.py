@@ -11,12 +11,12 @@ from DQN.model import Linear_QNet
 # Ikaw na bahala sa API para ma dynamic ang pag send and shit sa model path...
 
 DQN_PATH = "model/DQN/checkpoint_300.pth"
-MODEL_PATH = DQN_PATH
 
-def load_model():
+
+def load_model(path):
     """Load trained model from file."""
     model = Linear_QNet(16, 256, 3)  # input, hidden, output
-    model.load_state_dict(torch.load(MODEL_PATH))
+    model.load_state_dict(torch.load(path))
     model.eval()
     return model
 
