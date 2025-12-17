@@ -12,18 +12,18 @@ os.makedirs("model/DuelDQN", exist_ok=True)
 
 
 MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
-LR = 0.001
+BATCH_SIZE = 128
+LR = 1e-4
 
 class Agent:
 
     def __init__(self):
         self.n_games = 0
         self.epsilon = 1 # randomness
-        self.gamma = 0.9 # discount rate
+        self.gamma = 0.99 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
         self.model = Dueling_QNet(16, 256, 3)
-        self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
+        self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma, target_update=500)
 
     def remember(self, state, action, reward, next_state, done):
         # store action as index (0/1/2) for compactness; accept one-hot or index
@@ -55,10 +55,7 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        if self.n_games >= 1000:
-            epsilon = 0
-        else:
-            epsilon = max(5, 80 - self.n_games)  # exploration factor before 1000 games
+        epsilon = 80 - self.n_games
 
         final_move = [0,0,0]
         if random.randint(0, 200) < self.epsilon:
@@ -80,6 +77,12 @@ def train():
     record = 0
     agent = Agent()
     game = SnakeGameAI()
+
+    plot_survival = []
+    plot_mean_survival = []
+    total_survival = 0
+
+    survival_steps = 0
     while True:
         # get old state
         state_old = game.get_state()
@@ -96,7 +99,7 @@ def train():
 
         # remember
         agent.remember(state_old, final_move, reward, state_new, done)
-
+        survival_steps += 1
         if done:
             # train long memory, plot result
             game.reset()
@@ -111,13 +114,35 @@ def train():
                 agent.model.save(f"checkpoint_{agent.n_games}.pth")
                 print(f"Checkpoint saved at game {agent.n_games}")
 
-            print('Game', agent.n_games, 'Score', score, 'Record:', record, 'frames', game.frame_iteration)
+            print('Game', agent.n_games, 'Score', score, 'Record:', record)
 
             plot_scores.append(score)
             total_score += score
             mean_score = total_score / agent.n_games
             plot_mean_scores.append(mean_score)
-            save_plot(plot_scores, plot_mean_scores, agent.n_games)
+            save_plot(
+                plot_scores,
+                plot_mean_scores,
+                agent.n_games,
+                ylabel="Score",
+                title="Score vs Games",
+                prefix="score"
+            )
+
+            plot_survival.append(survival_steps)
+            total_survival += survival_steps
+            mean_survival = total_survival / agent.n_games
+            plot_mean_survival.append(mean_survival)
+
+            survival_steps = 0
+            save_plot(
+                plot_survival,
+                plot_mean_survival,
+                agent.n_games,
+                ylabel="Survival Steps",
+                title="Survival vs Games",
+                prefix="survival"
+            )
 
 
 if __name__ == '__main__':

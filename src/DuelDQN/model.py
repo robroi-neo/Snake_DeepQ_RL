@@ -75,7 +75,8 @@ class QTrainer:
         self.update_target(hard=True)
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
-        self.criterion = nn.MSELoss()
+        # use Huber loss
+        self.criterion = nn.SmoothL1Loss()
 
         self.target_update = target_update
         self.step_count = 0
@@ -106,29 +107,37 @@ class QTrainer:
         reward = torch.tensor(reward, dtype=torch.float, device=self.device)
         done_mask = torch.tensor(done, dtype=torch.bool, device=self.device)
 
-        action = torch.tensor(action, device=self.device)
-        if action.dim() > 1:
-            action_idx = action.argmax(dim=1).long()
-        else:
-            action_idx = action.long()
-
-        # ensure batch dims
+        # ensure batch dims for state/next/reward/done
         if state.dim() == 1:
             state = state.unsqueeze(0)
             next_state = next_state.unsqueeze(0)
             reward = reward.unsqueeze(0)
-            action_idx = action_idx.unsqueeze(0)
             done_mask = done_mask.unsqueeze(0)
 
         # predicted Q-values for current states
         pred_q = self.model(state)                # [batch, actions]
+
+        # parse action input (support scalar index, one-hot vector, batch indices, batch one-hot)
+        action = torch.tensor(action, device=self.device)
+        if action.dim() == 0:
+            action_idx = action.long().unsqueeze(0)
+        elif action.dim() == 1:
+            if action.numel() == pred_q.size(1):
+                action_idx = action.argmax().unsqueeze(0).long()
+            elif action.numel() == state.size(0):
+                action_idx = action.long()
+            else:
+                action_idx = action.long()
+        else:
+            action_idx = action.argmax(dim=1).long()
+
         q_pred = pred_q.gather(1, action_idx.unsqueeze(1)).squeeze(1)  # [batch]
 
-        # compute target Q-values using the target network
+        # Double DQN: select next action using online model, evaluate with target network
         with torch.no_grad():
-            next_q = self.target_model(next_state)  # [batch, actions]
-            max_next_q, _ = next_q.max(dim=1)       # [batch]
-            q_target = reward + (~done_mask).float() * self.gamma * max_next_q
+            next_actions = self.model(next_state).argmax(dim=1, keepdim=True)  # [batch,1]
+            next_q_target = self.target_model(next_state).gather(1, next_actions).squeeze(1)
+            q_target = reward + (~done_mask).float() * self.gamma * next_q_target
 
         loss = self.criterion(q_pred, q_target)
         self.optimizer.zero_grad()

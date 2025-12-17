@@ -25,44 +25,102 @@ class Linear_QNet(nn.Module):
 
 
 class QTrainer:
-    def __init__(self, model, lr, gamma):
+    def __init__(self, model, lr, gamma, device=None, target_update=100):
         self.lr = lr
         self.gamma = gamma
-        self.model = model
+        self.device = device or (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
+
+        self.model = model.to(self.device)
+        # create target network
+        self.target_model = type(model)(*self._model_init_args(model)).to(self.device)
+        self.update_target(hard=True)
+
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
-        self.criterion = nn.MSELoss()
+        # use Huber loss (more robust)
+        self.criterion = nn.SmoothL1Loss()
+
+        self.target_update = target_update
+        self.step_count = 0
+
+    def _model_init_args(self, model):
+        input_size = model.linear1.in_features
+        hidden_size = model.linear1.out_features
+        output_size = model.linear2.out_features
+        return (input_size, hidden_size, output_size)
+
+    def update_target(self, hard=False):
+        if hard:
+            self.target_model.load_state_dict(self.model.state_dict())
+        else:
+            tau = 0.005
+            for p, tp in zip(self.model.parameters(), self.target_model.parameters()):
+                tp.data.copy_(tp.data * (1.0 - tau) + p.data * tau)
 
     def train_step(self, state, action, reward, next_state, done):
-        state = torch.tensor(state, dtype=torch.float)
-        next_state = torch.tensor(next_state, dtype=torch.float)
-        action = torch.tensor(action, dtype=torch.long)
-        reward = torch.tensor(reward, dtype=torch.float)
-        # (n, x)
+        # support lists/tuples/numpy arrays
+        state = torch.tensor(state, dtype=torch.float, device=self.device)
+        next_state = torch.tensor(next_state, dtype=torch.float, device=self.device)
+        reward = torch.tensor(reward, dtype=torch.float, device=self.device)
+        done_mask = torch.tensor(done, dtype=torch.bool, device=self.device)
 
-        if len(state.shape) == 1:
-            # (1, x)
-            state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
-            action = torch.unsqueeze(action, 0)
-            reward = torch.unsqueeze(reward, 0)
-            done = (done, )
+        action = torch.tensor(action, device=self.device)
+        if action.dim() > 1:
+            action_idx = action.argmax(dim=1).long()
+        else:
+            action_idx = action.long()
 
-        # 1: predicted Q values with current state
-        pred = self.model(state)
+        # ensure batch dims
+        if state.dim() == 1:
+            state = state.unsqueeze(0)
+            next_state = next_state.unsqueeze(0)
+            reward = reward.unsqueeze(0)
+            action_idx = action_idx.unsqueeze(0)
+            done_mask = done_mask.unsqueeze(0)
 
-        target = pred.clone()
-        for idx in range(len(done)):
-            Q_new = reward[idx]
-            if not done[idx]:
-                Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
+        # ensure batch dims
+        if state.dim() == 1:
+            state = state.unsqueeze(0)
+            next_state = next_state.unsqueeze(0)
+            reward = reward.unsqueeze(0)
+            done_mask = done_mask.unsqueeze(0)
 
-            target[idx][torch.argmax(action[idx]).item()] = Q_new
-    
-        # 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
-        # pred.clone()
-        # preds[argmax(action)] = Q_new
+        # predicted Q-values for current states
+        pred_q = self.model(state)                # [batch, actions]
+
+        # parse action input (support: scalar index, one-hot vector, batch of indices, batch of one-hot vectors)
+        action = action.to(self.device)
+        if action.dim() == 0:
+            action_idx = action.long().unsqueeze(0)
+        elif action.dim() == 1:
+            # one-hot single vector (length == n_actions)
+            if action.numel() == pred_q.size(1):
+                action_idx = action.argmax().unsqueeze(0).long()
+            # batch of indices (length == batch)
+            elif action.numel() == state.size(0):
+                action_idx = action.long()
+            else:
+                action_idx = action.long()
+        else:
+            # assume one-hot batch: (batch, n_actions)
+            action_idx = action.argmax(dim=1).long()
+
+        q_pred = pred_q.gather(1, action_idx.unsqueeze(1)).squeeze(1)  # [batch]
+
+        # Double DQN target: select best action by online network, evaluate with target network
+        with torch.no_grad():
+            next_actions = self.model(next_state).argmax(dim=1, keepdim=True)  # [batch,1]
+            next_q_target = self.target_model(next_state).gather(1, next_actions).squeeze(1)
+            q_target = reward + (~done_mask).float() * self.gamma * next_q_target
+
+        loss = self.criterion(q_pred, q_target)
         self.optimizer.zero_grad()
-        loss = self.criterion(target, pred)
         loss.backward()
-
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
         self.optimizer.step()
+
+        # periodic target update
+        self.step_count += 1
+        if self.step_count % self.target_update == 0:
+            self.update_target(hard=True)
+
+        return loss.item()
